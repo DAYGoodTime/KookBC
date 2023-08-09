@@ -3,15 +3,12 @@
  */
 package snw.kookbc.impl.launch;
 
-import org.spongepowered.asm.util.JavaVersion;
 import snw.jkook.plugin.MarkedClassLoader;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Method;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -52,21 +49,8 @@ public class LaunchClassLoader extends URLClassLoader implements MarkedClassLoad
     private static final String[] RESERVED_NAMES = {"CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5",
             "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"};
 
-    private static final boolean DEBUG = Boolean.parseBoolean(System.getProperty("mixin.debug", "false"));
-
     static {
-        if (JavaVersion.current() >= JavaVersion.JAVA_9) {
-            try {
-                // Ignore this if you are working on Java 9 and later
-                // noinspection JavaReflectionMemberAccess
-                Method getDefinedPackageMethod = ClassLoader.class.getMethod("getDefinedPackage", String.class);
-                GET_DEFINED_PACKAGE = MethodHandles.lookup().unreflect(getDefinedPackageMethod);
-            } catch (Throwable e) {
-                throw new Error("Unable to initialize LaunchClassLoader.getPackage0 environment.", e);
-            }
-        } else {
-            GET_DEFINED_PACKAGE = null;
-        }
+        GET_DEFINED_PACKAGE = null;
     }
 
     public LaunchClassLoader(URL[] sources) {
@@ -232,9 +216,7 @@ public class LaunchClassLoader extends URLClassLoader implements MarkedClassLoad
                 }
             }
             invalidClasses.add(name);
-            if (DEBUG) {
-                LogWrapper.LOGGER.error("Exception encountered attempting classloading of {}", name, e);
-            }
+            LogWrapper.LOGGER.error("Exception encountered attempting classloading of {}", name, e);
             throw new ClassNotFoundException(name, e);
         }
     }
@@ -294,20 +276,15 @@ public class LaunchClassLoader extends URLClassLoader implements MarkedClassLoad
     }
 
     private byte[] runTransformers(final String name, final String transformedName, byte[] basicClass) {
-        if (DEBUG) {
-            LogWrapper.LOGGER.warn("Beginning transform of {{} ({})} Start Length: {}", name, transformedName, (basicClass == null ? 0 : basicClass.length));
-            for (final IClassTransformer transformer : transformers) {
-                final String transName = transformer.getClass().getName();
-                LogWrapper.LOGGER.warn("Before Transformer {{} ({})} {}: {}", name, transformedName, transName, (basicClass == null ? 0 : basicClass.length));
-                basicClass = transformer.transform(name, transformedName, basicClass);
-                LogWrapper.LOGGER.warn("After  Transformer {{} ({})} {}: {}", name, transformedName, transName, (basicClass == null ? 0 : basicClass.length));
-            }
-            LogWrapper.LOGGER.warn("Ending transform of {{} ({})} Start Length: {}", name, transformedName, (basicClass == null ? 0 : basicClass.length));
-        } else {
-            for (final IClassTransformer transformer : transformers) {
-                basicClass = transformer.transform(name, transformedName, basicClass);
-            }
+        LogWrapper.LOGGER.warn("Beginning transform of {{} ({})} Start Length: {}", name, transformedName, (basicClass == null ? 0 : basicClass.length));
+        for (final IClassTransformer transformer : transformers) {
+            final String transName = transformer.getClass().getName();
+            LogWrapper.LOGGER.warn("Before Transformer {{} ({})} {}: {}", name, transformedName, transName, (basicClass == null ? 0 : basicClass.length));
+            basicClass = transformer.transform(name, transformedName, basicClass);
+            LogWrapper.LOGGER.warn("After  Transformer {{} ({})} {}: {}", name, transformedName, transName, (basicClass == null ? 0 : basicClass.length));
         }
+        LogWrapper.LOGGER.warn("Ending transform of {{} ({})} Start Length: {}", name, transformedName, (basicClass == null ? 0 : basicClass.length));
+
         return basicClass;
     }
 
@@ -393,15 +370,13 @@ public class LaunchClassLoader extends URLClassLoader implements MarkedClassLoad
             final URL classResource = findResource(resourcePath);
 
             if (classResource == null) {
-                if (DEBUG)
-                    LogWrapper.LOGGER.warn("Failed to find class resource {}", resourcePath);
+                LogWrapper.LOGGER.warn("Failed to find class resource {}", resourcePath);
                 negativeResourceCache.add(name);
                 return null;
             }
             classStream = classResource.openStream();
 
-            if (DEBUG)
-                LogWrapper.LOGGER.warn("Loading class {} from resource {}", name, classResource);
+            LogWrapper.LOGGER.warn("Loading class {} from resource {}", name, classResource);
             final byte[] data = readFully(classStream);
             resourceCache.put(name, data);
             return data;

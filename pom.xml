@@ -6,7 +6,7 @@
     <name>KookBC</name>
     <groupId>snw</groupId>
     <artifactId>kookbc</artifactId>
-    <version>0.27.3</version>
+    <version>0.27.2.1-shade</version>
     <description>The Kook Bot Client standard implementation for Java.</description>
 
     <!-- Do not care the order! -->
@@ -51,9 +51,8 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <log4j2.version>2.19.0</log4j2.version>
-        <jkook.version>0.49.2</jkook.version>
+        <jkook.version>0.49.1</jkook.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <mixin.version>0.12.4+mixin.0.8.5</mixin.version>
         <asm.version>9.3</asm.version>
         <!-- Used by JitPack CI -->
         <skipShade>false</skipShade>
@@ -63,31 +62,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>pl.project13.maven</groupId>
-                <artifactId>git-commit-id-plugin</artifactId>
-                <version>4.0.5</version>
-                <executions>
-                    <execution>
-                        <id>get-the-git-info</id>
-                        <goals>
-                            <goal>revision</goal>
-                        </goals>
-                        <phase>initialize</phase>
-                    </execution>
-                </executions>
-                <configuration>
-                    <generateGitPropertiesFile>true</generateGitPropertiesFile>
-                    <generateGitPropertiesFilename>${project.build.outputDirectory}/kookbc_git_data.properties
-                    </generateGitPropertiesFilename>
-                    <includeOnlyProperties>
-                        <includeOnlyProperty>^git.build.(time|version)$</includeOnlyProperty>
-                        <includeOnlyProperty>^git.commit.id.(abbrev|full)$</includeOnlyProperty>
-                    </includeOnlyProperties>
-                    <commitIdGenerationMode>full</commitIdGenerationMode>
-                    <dateFormatTimeZone>Asia/Shanghai</dateFormatTimeZone>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -106,7 +80,7 @@
                     <archive>
                         <manifestEntries>
                             <!-- Edit "LaunchMain" to "Main" to disable Mixin support if you want -->
-                            <Main-Class>snw.kookbc.LaunchMain</Main-Class>
+                            <Main-Class>snw.kookbc.Main</Main-Class>
                             <Build-Time>${maven.build.timestamp}</Build-Time>
                             <Specification-Title>JKook</Specification-Title>
                             <Specification-Version>${jkook.version}</Specification-Version>
@@ -149,6 +123,14 @@
                                     </excludes>
                                 </filter>
                             </filters>
+                            <relocations>
+                                <relocation>
+                                    <!-- 源包名 -->
+                                    <pattern>com.google.gson</pattern>
+                                    <!-- 目的包名 -->
+                                    <shadedPattern>shaded.gson</shadedPattern>
+                                </relocation>
+                            </relocations>
                         </configuration>
                     </execution>
                 </executions>
@@ -289,12 +271,6 @@
         </dependency>
 
 
-        <!--Mixin-->
-        <dependency>
-            <groupId>net.fabricmc</groupId>
-            <artifactId>sponge-mixin</artifactId>
-            <version>${mixin.version}</version>
-        </dependency>
 
         <!--Command - Cloud-->
         <dependency>
